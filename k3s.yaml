@@ -1,0 +1,20 @@
+- name: Configure master components
+  hosts: master
+  become: yes
+  become_user: root
+  gather_facts: true
+  roles:
+    - role: k3s/master
+
+- name: join worker nodes
+  hosts: workers
+  become: yes
+  become_user: root
+  gather_facts: true
+  pre_tasks:
+    - name: store node token
+      command: "cat /var/lib/rancher/k3s/server/node-token"
+      delegate_to: "{{ groups['master'][0] }}"
+      register: node_token
+  roles:
+    - role: k3s/worker
