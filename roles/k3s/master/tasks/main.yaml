@@ -1,0 +1,123 @@
+# - name: Check for existing kube-config
+#   stat: 
+#     path: /root/.kube/config
+#   register: p
+
+# - name: initalize cluster if kubeconfig is missing
+#   block: 
+#   - name: Initalize cluster
+#     shell:
+#       cmd: "kubeadm init --pod-network-cidr={{ pod_cidr }} --service-cidr={{ service_cidr }}"
+
+#   - name: Create kube config dir
+#     file:
+#       path: "/root/.kube"
+#       state: directory
+#       mode: '0755'
+
+#   - name: copy admin conf to /root/.kube/config
+#     copy:
+#       src: /etc/kubernetes/admin.conf
+#       dest: /root/.kube/config
+#       owner: root
+#       group: root
+#       remote_src: yes
+#       mode: '0400'
+#   when: p.stat.exists == false
+
+# - name: Create flannel tmp dir
+#   file:
+#     path: "/tmp/flannel"
+#     state: directory
+#     mode: '0755'
+
+# - name: copy flannel configs to host
+#   template:
+#     src: "../templates/flannel-{{ item }}.j2"
+#     dest: "/tmp/flannel/{{ item }}"
+#     owner: root
+#     group: root
+#     mode: '0644'
+#   loop:
+#     - cm.yaml
+#     - cr.yaml
+#     - crb.yaml
+#     - sa.yaml
+#     - ds-arm.yaml
+
+# - name: deploy flannel components
+#   shell:
+#     cmd: "kubectl apply -f /tmp/flannel/"
+
+- name: Check for executible k3s binary
+  stat: 
+    path: /usr/local/bin/k3s
+  register: p
+
+- name: Download k3s
+  get_url:
+    url: "{{ k3s_download_url }}"
+    dest: "/usr/local/bin/k3s"
+    mode: '0755'
+  when: p.stat.exists == false
+
+# do I need to create env file?
+- name: create k3s systemd service
+  template:
+    src: ../templates/{{ item }}.j2
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - k3s.service
+    - k3s.service.env
+
+- name: Enable and start k3s
+  service:
+    name: k3s
+    state: started
+    daemon_reload: yes
+    enabled: yes
+
+- name: Create local certs dir
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "~/.kube"
+    - "{{ local_certs_dir }}"
+
+- name: Store admin certs locally
+  fetch:
+    src: "/var/lib/rancher/k3s/server/tls/{{ item }}"
+    dest: "~/.kube/{{ local_certs_dir }}/{{ item }}"
+    flat: yes
+  loop:
+    - client-admin.crt
+    - client-admin.key
+    - server-ca.crt
+
+- name: create kubeconfig on localhost
+  template:
+    src: ../templates/admin.kubeconfig.j2
+    dest: "~/.kube/{{ cluster_name }}"
+    mode: '0644'
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+# #   when: p.stat.exists == false
+
+# [INFO]  Downloading hash https://github.com/rancher/k3s/releases/download/v1.17.3+k3s1/sha256sum-arm64.txt
+# [INFO]  Downloading binary https://github.com/rancher/k3s/releases/download/v1.17.3+k3s1/k3s-arm64
+# [INFO]  Verifying binary download
+# [INFO]  Installing k3s to /usr/local/bin/k3s
+# [INFO]  Skipping /usr/local/bin/kubectl symlink to k3s, command exists in PATH at /usr/bin/kubectl
+# [INFO]  Skipping /usr/local/bin/crictl symlink to k3s, command exists in PATH at /usr/bin/crictl
+# [INFO]  Skipping /usr/local/bin/ctr symlink to k3s, command exists in PATH at /usr/bin/ctr
+# [INFO]  Creating killall script /usr/local/bin/k3s-killall.sh
+# [INFO]  Creating uninstall script /usr/local/bin/k3s-uninstall.sh
+# [INFO]  env: Creating environment file /etc/systemd/system/k3s.service.env
+# [INFO]  systemd: Creating service file /etc/systemd/system/k3s.service
