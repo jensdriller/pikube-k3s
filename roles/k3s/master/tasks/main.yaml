@@ -1,54 +1,3 @@
-# - name: Check for existing kube-config
-#   stat: 
-#     path: /root/.kube/config
-#   register: p
-
-# - name: initalize cluster if kubeconfig is missing
-#   block: 
-#   - name: Initalize cluster
-#     shell:
-#       cmd: "kubeadm init --pod-network-cidr={{ pod_cidr }} --service-cidr={{ service_cidr }}"
-
-#   - name: Create kube config dir
-#     file:
-#       path: "/root/.kube"
-#       state: directory
-#       mode: '0755'
-
-#   - name: copy admin conf to /root/.kube/config
-#     copy:
-#       src: /etc/kubernetes/admin.conf
-#       dest: /root/.kube/config
-#       owner: root
-#       group: root
-#       remote_src: yes
-#       mode: '0400'
-#   when: p.stat.exists == false
-
-# - name: Create flannel tmp dir
-#   file:
-#     path: "/tmp/flannel"
-#     state: directory
-#     mode: '0755'
-
-# - name: copy flannel configs to host
-#   template:
-#     src: "../templates/flannel-{{ item }}.j2"
-#     dest: "/tmp/flannel/{{ item }}"
-#     owner: root
-#     group: root
-#     mode: '0644'
-#   loop:
-#     - cm.yaml
-#     - cr.yaml
-#     - crb.yaml
-#     - sa.yaml
-#     - ds-arm.yaml
-
-# - name: deploy flannel components
-#   shell:
-#     cmd: "kubectl apply -f /tmp/flannel/"
-
 - name: Check for executible k3s binary
   stat: 
     path: /usr/local/bin/k3s
@@ -61,7 +10,6 @@
     mode: '0755'
   when: p.stat.exists == false
 
-# do I need to create env file?
 - name: create k3s systemd service
   template:
     src: ../templates/{{ item }}.j2
@@ -107,8 +55,6 @@
   delegate_to: localhost
   run_once: true
   become: false
-
-# #   when: p.stat.exists == false
 
 # [INFO]  Downloading hash https://github.com/rancher/k3s/releases/download/v1.17.3+k3s1/sha256sum-arm64.txt
 # [INFO]  Downloading binary https://github.com/rancher/k3s/releases/download/v1.17.3+k3s1/k3s-arm64
