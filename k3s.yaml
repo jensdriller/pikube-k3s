@@ -1,10 +1,10 @@
-- name: Configure master components
-  hosts: master
-  become: yes
-  become_user: root
-  gather_facts: true
-  roles:
-    - role: k3s/master
+# - name: Configure master components
+#   hosts: master
+#   become: yes
+#   become_user: root
+#   gather_facts: true
+#   roles:
+#     - role: k3s/master
 
 - name: join worker nodes
   hosts: workers
@@ -16,5 +16,11 @@
       command: "cat /var/lib/rancher/k3s/server/node-token"
       delegate_to: "{{ groups['master'][0] }}"
       register: node_token
+    - name: gather facts from master host
+      setup:
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      when: hostvars[item]['ansible_default_ipv4'] is not defined
+      with_items: "{{ groups['master'] }}"
   roles:
     - role: k3s/worker
