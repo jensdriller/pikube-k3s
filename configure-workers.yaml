@@ -1,0 +1,18 @@
+- name: join worker nodes
+  hosts: workers
+  become: yes
+  become_user: root
+  gather_facts: true
+  pre_tasks:
+    - name: store node token
+      command: "cat /var/lib/rancher/k3s/server/node-token"
+      delegate_to: "{{ groups['master'][0] }}"
+      register: node_token
+    - name: gather facts from master host
+      setup:
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      when: hostvars[item]['ansible_default_ipv4'] is not defined
+      with_items: "{{ groups['master'] }}"
+  roles:
+    - role: k3s/worker
