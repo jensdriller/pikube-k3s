@@ -1,0 +1,31 @@
+- name: stop k3s service
+  service:
+    name: "{{ item }}"
+    state: stopped
+    daemon_reload: yes
+    enabled: no
+  ignore_errors: yes 
+  with_items:
+    - k3s
+
+- name: Remove k3s from iptables
+  script:
+    cmd: ../files/unmount.sh
+
+- name: Cleans up directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  ignore_errors: yes 
+  loop:
+    - /usr/local/bin/k3s
+    - /var/lib/kubelet
+    - /var/lib/rancher/k3s
+    - /etc/rancher/node
+    - /usr/local/bin/k3s
+    - /etc/systemd/system/k3s.system
+    - /etc/systemd/system/k3s.system.env
+
+- name: Remove k3s from iptables
+  script:
+    cmd: ../files/clean-iptables.sh

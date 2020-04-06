@@ -1,0 +1,17 @@
+- name: clean-master
+  hosts: master
+  gather_facts: true
+  become: true
+  become_user: root
+  roles:
+    - role: clean
+      tags: ['never', 'master']
+
+- name: clean-workers
+  hosts: workers
+  gather_facts: true
+  become: true
+  become_user: root
+  roles:
+    - role: clean
+      tags: ['never', 'workers']
