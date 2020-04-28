@@ -6,6 +6,8 @@ DEST_IP_ADDR=$2
 # copy public ssh key to destintation
 ssh-copy-id $USER@$DEST_IP_ADDR
 
+# need to disable passwordless sudo
+
 # Add ssh public key for root ssh access
 cat ~/.ssh/id_rsa.pub | \
   ssh $USER@$DEST_IP_ADDR \

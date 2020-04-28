@@ -1,4 +1,4 @@
-all: base master workers
+all: base-install configure-master configure-workers
 
 base-install:
 	ansible-playbook ./base-install.yaml -i inventories/cluster-0/hosts

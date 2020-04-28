@@ -18,14 +18,6 @@
     group: root
     mode: "0644" 
 
-- name: copy boot ops to enable cgroups
-  copy:
-    src: nobtcmd.txt
-    dest: /boot/firmware/nobtcmd.txt
-    owner: root
-    group: root
-    mode: "0644" 
-
 - name: Install required packages
   package:
     name: "{{ item }}"
@@ -38,6 +30,25 @@
 - name: Update repositories cache
   apt:
     update_cache: yes
+
+- name: pi-only tasks
+  block:
+  - name: Set Overclock on PIs
+    lineinfile:
+      path: /boot/firmware/config.txt
+      regexp: "^{{ item }}"
+      line: "{{ item }}"
+    loop:
+      - over_voltage=6
+      - arm_freq=2000
+  - name: copy boot ops to enable cgroups
+    copy:
+      src: nobtcmd.txt
+      dest: /boot/firmware/nobtcmd.txt
+      owner: root
+      group: root
+      mode: "0644" 
+  when: ansible_architecture == "aarch64"
 
 - name: Reboot and wait up to 5 minutes for the host to respond
   reboot:

@@ -23,8 +23,8 @@
     - /var/lib/rancher/k3s
     - /etc/rancher/node
     - /usr/local/bin/k3s
-    - /etc/systemd/system/k3s.system
-    - /etc/systemd/system/k3s.system.env
+    - /etc/systemd/system/k3s.service
+    - /etc/systemd/system/k3s.service.env
 
 - name: Remove k3s from iptables
   script:
