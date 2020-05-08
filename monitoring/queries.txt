@@ -1,0 +1,25 @@
+# % periods throttled
+sum(rate(container_cpu_cfs_throttled_periods_total[5m]))by (pod, container)/sum(rate(container_cpu_cfs_periods_total[5m]))by (pod, container)
+
+# memory utilization
+(sum(container_memory_usage_bytes{pod=~".+"}) by (container, pod) / (sum(container_spec_memory_limit_bytes) by (pod, container) > 0)) * 100
+
+# container swap bytes (by container and by node)
+sum(container_memory_swap{container=~".+"}) by (pod, container)
+sum(node_memory_SwapTotal_bytes) by (kubernetes_node)
+
+# high num of OOM kills ( > 50 kills / hour?) - this is contentious because a customer could set a bad limit and repeatedly OOM
+sum (delta(node_vmstat_oom_kill[1h])) by (kubernetes_node)
+
+# packets dropped over 5m interval - by interface
+sum(rate(container_network_receive_packets_dropped_total[5m])) by (kubernetes_io_hostname, interface)
+sum(rate(container_network_transmit_packets_dropped_total[5m])) by (kubernetes_io_hostname, interface)
+
+# low disk space ( < 10% )
+node_filesystem_free_bytes/node_filesystem_size_bytes < .1
+
+# kubelet errors
+delta(kubelet_runtime_operations_errors_total[1h])
+
+# incorrectly configured host
+(node_cpu_frequency_max_hertz / 1e9) < 2
