@@ -1,5 +1,8 @@
 all: base-install configure-master configure-workers
 
+get-vars:
+	ansible -m setup -i inventories/cluster-0/hosts workers
+
 base-install:
 	ansible-playbook ./base-install.yaml -i inventories/cluster-0/hosts
 
@@ -17,3 +20,5 @@ clean-workers:
 
 clean-all:
 	ansible-playbook ./clean.yaml -i inventories/cluster-0/hosts --tags "master, workers"
+
+.PHONY: get-vars base-install configure-master configure-workers clean-master clean-workers clean-all

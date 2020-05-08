@@ -33,6 +33,8 @@
 
 - name: pi-only tasks
   block:
+  # This may not work on all devices
+  # we should set this dynamically based on host level attributes
   - name: Set Overclock on PIs
     lineinfile:
       path: /boot/firmware/config.txt
@@ -43,11 +45,13 @@
       - arm_freq=2000
   - name: copy boot ops to enable cgroups
     copy:
-      src: nobtcmd.txt
-      dest: /boot/firmware/nobtcmd.txt
+      src: "{{ item }}"
+      dest: "/boot/firmware/{{ item }}"
       owner: root
       group: root
       mode: "0644" 
+    loop:
+      - "{{ 'cmdline.txt' if ansible_distribution_major_version | int >= 20 else 'nobtcmd.txt'}}"
   when: ansible_architecture == "aarch64"
 
 - name: Reboot and wait up to 5 minutes for the host to respond
