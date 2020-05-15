@@ -23,3 +23,9 @@ delta(kubelet_runtime_operations_errors_total[1h])
 
 # incorrectly configured host
 (node_cpu_frequency_max_hertz / 1e9) < 2
+
+# container_spec_memory_limit_bytes
+## % allocated CPU
+(sum(kube_pod_container_resource_limits_cpu_cores) by (node) / sum(kube_node_status_allocatable_cpu_cores) by (node)) * 100
+## % allocated Mem
+(sum(kube_pod_container_resource_limits_memory_bytes) by (node) / sum(kube_node_status_allocatable_memory_bytes) by (node)) * 100
